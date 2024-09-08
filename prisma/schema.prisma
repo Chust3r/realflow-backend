@@ -1,0 +1,129 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model account {
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  user              user    @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "account_userId_user_id_fk")
+
+  @@id([provider, providerAccountId], map: "account_provider_providerAccountId_pk")
+}
+
+model authenticator {
+  credentialID         String  @unique(map: "authenticator_credentialID_unique")
+  userId               String
+  providerAccountId    String
+  credentialPublicKey  String
+  counter              Int
+  credentialDeviceType String
+  credentialBackedUp   Boolean
+  transports           String?
+  user                 user    @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "authenticator_userId_user_id_fk")
+
+  @@id([userId, credentialID], map: "authenticator_userId_credentialID_pk")
+}
+
+model message {
+  id        String   @id
+  createdAt DateTime @default(now())
+  content   String
+  roomId    String
+  room      room     @relation(fields: [roomId], references: [id], onDelete: Cascade, map: "message_roomId_room_id_fk")
+}
+
+model metric {
+  id        String   @id
+  createdAt DateTime @default(now())
+  roomId    String
+  event     String
+  payload   String?
+  room      room     @relation(fields: [roomId], references: [id], onDelete: Cascade, map: "metric_roomId_room_id_fk")
+}
+
+model request {
+  id         String   @id
+  origin     String
+  createdAt  DateTime @default(now())
+  address    String
+  authorized Boolean
+  roomId     String
+  userAgent  String
+  room       room     @relation(fields: [roomId], references: [id], onDelete: Cascade, map: "request_roomId_room_id_fk")
+}
+
+model room {
+  id                 String       @id
+  name               String
+  description        String?
+  createdAt          DateTime     @default(now())
+  updatedAt          DateTime
+  userId             String
+  messagePersistence Boolean      @default(false)
+  webhook            Boolean      @default(false)
+  webhookUrl         String?
+  maxConnections     Int          @default(20)
+  publicKey          String
+  slug               String
+  connections        Int          @default(0)
+  message            message[]
+  metric             metric[]
+  request            request[]
+  user               user         @relation(fields: [userId], references: [id], map: "room_userId_user_id_fk")
+  secretkeys         secretkeys[]
+
+  @@unique([id, slug], map: "rooms_id_slug_key")
+}
+
+model secretkeys {
+  id          String    @id
+  value       String
+  expires     DateTime?
+  roomId      String
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime
+  ipAddress   String    @default("")
+  description String
+  room        room      @relation(fields: [roomId], references: [id], onDelete: Cascade, map: "secretkeys_roomId_room_id_fk")
+}
+
+model session {
+  sessionToken String   @id
+  userId       String
+  expires      DateTime @db.Timestamp(6)
+  user         user     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "session_userId_user_id_fk")
+}
+
+model user {
+  id            String          @id
+  name          String?
+  email         String?         @unique(map: "user_email_unique")
+  emailVerified DateTime?       @db.Timestamp(6)
+  image         String?
+  account       account[]
+  authenticator authenticator[]
+  room          room[]
+  session       session[]
+}
+
+model verificationToken {
+  identifier String
+  token      String
+  expires    DateTime @db.Timestamp(6)
+
+  @@id([identifier, token], map: "verificationToken_identifier_token_pk")
+}
