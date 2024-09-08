@@ -1,5 +1,6 @@
 import { serve } from '@hono/node-server'
 import { Hono } from 'hono'
+import { matcher } from '~lib/utils'
 import { api } from './api'
 import { roomHandler } from './ws'
 
@@ -15,6 +16,7 @@ export const server = serve({
 //→ CONFIG WS ROUTE
 
 server.on('upgrade', (req, socket, head) => {
-	if (req.url === '/rooms') return roomHandler.handleUpgrade(req, socket, head)
+	if (matcher('/rooms', req.url))
+		return roomHandler.handleUpgrade(req, socket, head)
 	return socket.destroy()
 })
