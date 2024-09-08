@@ -12,7 +12,8 @@
 		"paths": {
 			"~/*": ["app/*"],
 			"~lib/*": ["lib/*"],
-			"~db": ["lib/db.ts"]
+			"~db": ["lib/db.ts"],
+			"~consts": ["lib/consts.ts"]
 		}
 	}
 }
