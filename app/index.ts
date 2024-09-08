@@ -15,6 +15,6 @@ export const server = serve({
 //→ CONFIG WS ROUTE
 
 server.on('upgrade', (req, socket, head) => {
-	if (req.url === '/rooms') roomHandler.handleUpgrade(req, socket, head)
+	if (req.url === '/rooms') return roomHandler.handleUpgrade(req, socket, head)
 	return socket.destroy()
 })
