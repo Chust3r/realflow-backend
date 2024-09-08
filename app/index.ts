@@ -16,4 +16,5 @@ export const server = serve({
 
 server.on('upgrade', (req, socket, head) => {
 	if (req.url === '/rooms') roomHandler.handleUpgrade(req, socket, head)
+	return socket.destroy()
 })
