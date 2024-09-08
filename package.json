@@ -11,6 +11,7 @@
 		"crossws": "^0.3.0",
 		"hono": "^4.5.11",
 		"ioredis": "^5.4.1",
+		"jose": "^5.8.0",
 		"valibot": "^0.41.0"
 	},
 	"devDependencies": {
