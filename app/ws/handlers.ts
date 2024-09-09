@@ -1,6 +1,7 @@
 import type { Peer } from 'crossws'
 import { getQueryParam } from 'hono/utils/url'
 import { verify } from '~lib/jwt'
+import { addConnection, removeConnection } from '~lib/store'
 
 interface IMessage {
 	timestamp: string
@@ -27,11 +28,38 @@ export const open = async (peer: Peer) => {
 
 	if (!token) peer.close()
 
-	const roomId = token?.roomId
+	const roomId = token?.roomId as string
 
-	
+	peer.subscribe(roomId)
 
-	const msg = createMessage('open')
+	const { connections } = await addConnection(roomId, peer.id)
+
+	const msg = createMessage('open', {
+		connections,
+	})
 
 	peer.send(msg)
+	peer.publish(roomId, msg)
+}
+
+export const close = async (
+	peer: Peer,
+	details: { code?: number; reason?: string }
+) => {
+	const t = getQueryParam(peer.request?.url!, 't') as string
+
+	const token = await verify(t)
+
+	if (!token) peer.close()
+
+	const roomId = token?.roomId as string
+
+	const { connections } = await removeConnection(roomId, peer.id)
+
+	const msg = createMessage('close', {
+		connections,
+		details,
+	})
+
+	peer.publish(roomId, msg)
 }
