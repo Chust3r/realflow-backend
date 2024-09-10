@@ -1,5 +1,5 @@
 import crossws from 'crossws/adapters/node'
-import { open, close } from './handlers'
+import { open, close, message } from './handlers'
 
 export const roomHandler = crossws({
 	hooks: {
@@ -7,6 +7,6 @@ export const roomHandler = crossws({
 		open,
 		close,
 		error: () => {},
-		message: () => {},
+		message,
 	},
 })
