@@ -7,7 +7,6 @@ export const sign = async (payload: Record<string, any>) => {
 	const jwt = new SignJWT(payload)
 		.setProtectedHeader({ alg: 'HS256' })
 		.setIssuedAt()
-		.setExpirationTime(JWT_EXPIRES)
 		.sign(secret)
 
 	return jwt
