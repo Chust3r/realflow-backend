@@ -14,9 +14,6 @@ importers:
       '@hono/node-ws':
         specifier: ^1.0.4
         version: 1.0.4(@hono/node-server@1.12.2(hono@4.5.11))
-      '@hono/valibot-validator':
-        specifier: ^0.3.0
-        version: 0.3.0(hono@4.5.11)(valibot@0.41.0(typescript@5.5.4))
       '@prisma/client':
         specifier: 5.17.0
         version: 5.17.0(prisma@5.19.1)
@@ -29,12 +26,6 @@ importers:
       ioredis:
         specifier: ^5.4.1
         version: 5.4.1
-      jose:
-        specifier: ^5.8.0
-        version: 5.8.0
-      valibot:
-        specifier: ^0.41.0
-        version: 0.41.0(typescript@5.5.4)
     devDependencies:
       '@types/node':
         specifier: ^20.16.5
@@ -214,12 +205,6 @@ packages:
     peerDependencies:
       '@hono/node-server': ^1.11.1
 
-  '@hono/valibot-validator@0.3.0':
-    resolution: {integrity: sha512-EcGJKzLt11SK4K11yKHrhI93ECtKeSHAnnENHw5tCL0ZhyDIx96avc3Ua8/ri4fwVvRPuOzFQ2OBRsVvwZuqeQ==}
-    peerDependencies:
-      hono: '>=3.9.0'
-      valibot: '>=0.31.0 <1'
-
   '@ioredis/commands@1.2.0':
     resolution: {integrity: sha512-Sx1pU8EM64o2BrqNpEO1CNLtKQwyhuXuqyfH7oGKCk+1a33d2r5saW8zNwm3j6BTExtjrv2BxTgzzkMwts6vGg==}
 
@@ -332,9 +317,6 @@ packages:
     resolution: {integrity: sha512-2YZsvl7jopIa1gaePkeMtd9rAcSjOOjPtpcLlOeusyO+XH2SK5ZcT+UCrElPP+WVIInh2TzeI4XW9ENaSLVVHA==}
     engines: {node: '>=12.22.0'}
 
-  jose@5.8.0:
-    resolution: {integrity: sha512-E7CqYpL/t7MMnfGnK/eg416OsFCVUrU/Y3Vwe7QjKhu/BkS1Ms455+2xsqZQVN57/U2MHMBvEb5SrmAZWAIntA==}
-
   lodash.defaults@4.2.0:
     resolution: {integrity: sha512-qjxPLHd3r5DnsdGacqOMU6pb/avJzdh9tFX2ymgoZE27BmjXrNy/y4LoaiTeAb+O3gL8AfpJGtqfX/ae2leYYQ==}
 
@@ -398,14 +380,6 @@ packages:
 
   v8-compile-cache-lib@3.0.1:
     resolution: {integrity: sha512-wa7YjyUGfNZngI/vtK0UHAN+lgDCxBPCylVXGp0zu59Fz5aiGtNXaq3DhIov063MorB+VfufLh3JlF2KdTK3xg==}
-
-  valibot@0.41.0:
-    resolution: {integrity: sha512-igDBb8CTYr8YTQlOKgaN9nSS0Be7z+WRuaeYqGf3Cjz3aKmSnqEmYnkfVjzIuumGqfHpa3fLIvMEAfhrpqN8ng==}
-    peerDependencies:
-      typescript: '>=5'
-    peerDependenciesMeta:
-      typescript:
-        optional: true
 
   ws@8.18.0:
     resolution: {integrity: sha512-8VbfWfHLbbwu3+N6OKsOMpBdT4kXPDDB9cJk2bJ6mh9ucxdlnNvH1e+roYkKmN9Nxw2yjz7VzeO9oOz2zJ04Pw==}
@@ -512,11 +486,6 @@ snapshots:
     transitivePeerDependencies:
       - bufferutil
       - utf-8-validate
-
-  '@hono/valibot-validator@0.3.0(hono@4.5.11)(valibot@0.41.0(typescript@5.5.4))':
-    dependencies:
-      hono: 4.5.11
-      valibot: 0.41.0(typescript@5.5.4)
 
   '@ioredis/commands@1.2.0': {}
 
@@ -640,8 +609,6 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  jose@5.8.0: {}
-
   lodash.defaults@4.2.0: {}
 
   lodash.isarguments@3.1.0: {}
@@ -698,10 +665,6 @@ snapshots:
   undici-types@6.19.8: {}
 
   v8-compile-cache-lib@3.0.1: {}
-
-  valibot@0.41.0(typescript@5.5.4):
-    optionalDependencies:
-      typescript: 5.5.4
 
   ws@8.18.0: {}
 
