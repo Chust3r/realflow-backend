@@ -3,8 +3,7 @@ import { db } from '~db'
 
 export type ReturnValues = {
 	ok: boolean
-	status: number
-	statusText: string
+	message: string
 	room?: room
 }
 
@@ -24,8 +23,7 @@ export const hasAcces = async (
 	if (!room)
 		return {
 			ok: false,
-			status: 404,
-			statusText: 'Room not found',
+			message: 'Room not found',
 		}
 
 	for (const item of room.secretkeys) {
@@ -33,23 +31,21 @@ export const hasAcces = async (
 			if (!item.expires || item.expires > new Date()) {
 				return {
 					ok: true,
-					status: 200,
-					statusText: 'OK',
+					message: 'OK',
 					room,
 				}
 			}
 
 			return {
 				ok: false,
-				status: 401,
-				statusText: 'Invalid Credentials',
+				message: 'Invalid Credentials',
+				room,
 			}
 		}
 	}
 
 	return {
 		ok: false,
-		status: 401,
-		statusText: 'Invalid Credentials',
+		message: 'Invalid Credentials',
 	}
 }

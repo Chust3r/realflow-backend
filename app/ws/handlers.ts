@@ -1,62 +1,38 @@
 import type { Message, Peer } from 'crossws'
-import { getQueryParam } from 'hono/utils/url'
-import { verify } from '~lib/jwt'
-import { addConnection, removeConnection } from '~lib/store'
+import { hasAcces } from '~lib/room'
+import { addConnection, getRoomByClientId, removeConnection } from '~lib/store'
 
 interface IMessage {
 	timestamp: string
 	event: string
-	payload?: Record<string, any>
+	payload?: any
 }
 
-const createMessage = (event: string, payload?: Record<string, any>) => {
+const createMessage = (event: string, payload?: any, timestamp?: string) => {
 	const m: IMessage = {
-		timestamp: new Date().toISOString(),
+		timestamp: timestamp || new Date().toISOString(),
 		event,
-		payload,
+		payload: payload,
 	}
 
 	return JSON.stringify(m)
 }
 
-export const open = async (peer: Peer) => {
-	const t = getQueryParam(peer.request?.url!, 't') as string
-
-	const token = await verify(t)
-
-	//→ IF TOKEN IS INVALID CLOSE
-
-	if (!token) peer.close()
-
-	const roomId = token?.roomId as string
-
-	peer.subscribe(roomId)
-
-	const { connections } = await addConnection(roomId, peer.id)
-
-	const msg = createMessage('open', {
-		connections,
-	})
-
-	peer.send(msg)
-	peer.publish(roomId, msg)
-}
+export const open = async (peer: Peer) => {}
 
 export const close = async (
 	peer: Peer,
 	details: { code?: number; reason?: string }
 ) => {
-	const t = getQueryParam(peer.request?.url!, 't') as string
+	const roomId = await getRoomByClientId(peer.id)
 
-	const token = await verify(t)
+	console.log('close', roomId)
 
-	if (!token) peer.close()
-
-	const roomId = token?.roomId as string
+	if (!roomId) return
 
 	const { connections } = await removeConnection(roomId, peer.id)
 
-	const msg = createMessage('close', {
+	const msg = createMessage('disconnection', {
 		connections,
 		details,
 	})
@@ -75,35 +51,68 @@ const parseMessage = (message: unknown) => {
 }
 
 export const message = async (peer: Peer, message: Message) => {
-	const t = getQueryParam(peer.request?.url!, 't') as string
-
-	const token = await verify(t)
-
-	//→ IF TOKEN IS INVALID CLOSE
-
-	if (!token) peer.close()
-
-	const roomId = token?.roomId as string
-
 	const { event, payload, timestamp } = parseMessage(message)
 
-	//→ PROCCESS DEFINED EVENTS AS PING
+	//→ HANDLE EVENTS
 
-	//→ PING EVENT DOES NOT NEED TO BE PUBLISHED, IT'S JUST TO CHECK IF THE CONNECTION IS ALIVE AND CALCULTE LATENCY
+	if (event === 'auth') {
+		//→ CHECK IF HAS ACCESS
+		const res = await hasAcces(payload.publicKey, payload.secretKey)
+
+		if (!res.ok && !res.room) return peer.close()
+
+		if (!res.ok && res.room) {
+			//→ TODO: UPDATE REQUEST METRICS
+
+			return peer.close()
+		}
+
+		//→ SUBSCRIBE TO ROOM
+
+		peer.subscribe(res.room?.id!)
+
+		//→ TODO: ADD CONNECTION TO STORE
+
+		const { connections } = await addConnection(res.room?.id!, peer.id)
+
+		const msg = createMessage('connection', {
+			connections,
+		})
+
+		const authMsg = createMessage('auth', {
+			ok: true,
+		})
+
+		//→ SEND CONNECTION MESSAGE
+
+		peer.send(authMsg)
+		peer.send(msg)
+		peer.publish(res.room?.id!, msg)
+
+		return
+	}
 
 	if (event === 'ping') {
+		const latency =
+			Date.now() - new Date(timestamp).getTime() ??
+			'LATENCY_ERROR TIMESTAMP IS INVALID'
+
 		const msg = createMessage('pong', {
-			latency: Date.now() - new Date(timestamp).getTime(),
+			latency,
 		})
+
+		//→ SEND PONG MESSAGE ONLY A USER THAT EMIT THE PING
 
 		peer.send(msg)
 
 		return
 	}
 
-	//→ IF EVENT IS UNKONOWN CLOSE
-
 	if (event === 'unknown') {
+		const roomId = await getRoomByClientId(peer.id)
+
+		if (!roomId) return peer.close()
+
 		const msg = createMessage('error', {
 			error: 'unknown event',
 		})
@@ -113,9 +122,4 @@ export const message = async (peer: Peer, message: Message) => {
 
 		return
 	}
-
-	//→ IF EVENT IS NOT DEFINED IS A CUSTOM EVENT, JUST PUBLISH
-
-	peer.send(message)
-	peer.publish(roomId, message)
 }

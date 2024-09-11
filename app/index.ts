@@ -1,12 +1,17 @@
 import { serve } from '@hono/node-server'
 import { Hono } from 'hono'
+import { cors } from 'hono/cors'
 import { matcher } from '~lib/utils'
-import { api } from './api'
 import { roomHandler } from './ws'
 
 const app = new Hono()
 
-app.route('/', api)
+app.use(
+	cors({
+		origin: '*',
+		allowMethods: ['GET', 'POST'],
+	})
+)
 
 export const server = serve({
 	fetch: app.fetch,
