@@ -75,7 +75,7 @@ export const message = async (peer: Peer, message: Message) => {
 
 		const { connections } = await addConnection(res.room?.id!, peer.id)
 
-		const msg = createMessage('connection', {
+		const connectionMsg = createMessage('connection', {
 			connections,
 		})
 
@@ -83,11 +83,18 @@ export const message = async (peer: Peer, message: Message) => {
 			ok: true,
 		})
 
+		const authorizedMessage = createMessage('authorized', {
+			message: 'A new user has joined the room',
+		})
+
 		//→ SEND CONNECTION MESSAGE
 
+		peer.send(authorizedMessage)
 		peer.send(authMsg)
-		peer.send(msg)
-		peer.publish(res.room?.id!, msg)
+		peer.send(connectionMsg)
+
+		peer.publish(res.room?.id!, authorizedMessage)
+		peer.publish(res.room?.id!, connectionMsg)
 
 		return
 	}
