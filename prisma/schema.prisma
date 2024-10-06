@@ -89,6 +89,7 @@ enum APITokenPermission {
 model ChannelAPIToken {
   id          String               @id @default(cuid())
   channel_id  String
+  value       String
   name        String
   description String?
   createdAt   DateTime             @default(now())
