@@ -1,13 +1,29 @@
-generator client {
-  provider = "prisma-client-js"
-}
-
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
-model account {
+generator client {
+  provider = "prisma-client-js"
+}
+
+//→ AUTH JS MODELS 
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+  accounts      Account[]
+  sessions      Session[]
+  channels      Channel[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Account {
   userId            String
   type              String
   provider          String
@@ -19,111 +35,166 @@ model account {
   scope             String?
   id_token          String?
   session_state     String?
-  user              user    @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "account_userId_user_id_fk")
 
-  @@id([provider, providerAccountId], map: "account_provider_providerAccountId_pk")
-}
-
-model authenticator {
-  credentialID         String  @unique(map: "authenticator_credentialID_unique")
-  userId               String
-  providerAccountId    String
-  credentialPublicKey  String
-  counter              Int
-  credentialDeviceType String
-  credentialBackedUp   Boolean
-  transports           String?
-  user                 user    @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "authenticator_userId_user_id_fk")
-
-  @@id([userId, credentialID], map: "authenticator_userId_credentialID_pk")
-}
-
-model message {
-  id        String   @id
   createdAt DateTime @default(now())
-  content   String
-  roomId    String
-  room      room     @relation(fields: [roomId], references: [id], onDelete: Cascade, map: "message_roomId_room_id_fk")
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([provider, providerAccountId])
 }
 
-model metric {
-  id        String   @id
-  createdAt DateTime @default(now())
-  roomId    String
-  event     String
-  payload   String?
-  room      room     @relation(fields: [roomId], references: [id], onDelete: Cascade, map: "metric_roomId_room_id_fk")
-}
-
-model request {
-  id         String   @id
-  origin     String
-  createdAt  DateTime @default(now())
-  address    String
-  authorized Boolean
-  roomId     String
-  userAgent  String
-  room       room     @relation(fields: [roomId], references: [id], onDelete: Cascade, map: "request_roomId_room_id_fk")
-}
-
-model room {
-  id                 String       @id
-  name               String
-  description        String?
-  createdAt          DateTime     @default(now())
-  updatedAt          DateTime
-  userId             String
-  messagePersistence Boolean      @default(false)
-  webhook            Boolean      @default(false)
-  webhookUrl         String?
-  maxConnections     Int          @default(20)
-  publicKey          String
-  slug               String
-  connections        Int          @default(0)
-  message            message[]
-  metric             metric[]
-  request            request[]
-  user               user         @relation(fields: [userId], references: [id], map: "room_userId_user_id_fk")
-  secretkeys         secretkeys[]
-
-  @@unique([id, slug], map: "rooms_id_slug_key")
-}
-
-model secretkeys {
-  id          String    @id
-  value       String
-  expires     DateTime?
-  roomId      String
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime
-  ipAddress   String    @default("")
-  description String
-  room        room      @relation(fields: [roomId], references: [id], onDelete: Cascade, map: "secretkeys_roomId_room_id_fk")
-}
-
-model session {
-  sessionToken String   @id
+model Session {
+  sessionToken String   @unique
   userId       String
-  expires      DateTime @db.Timestamp(6)
-  user         user     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "session_userId_user_id_fk")
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
-model user {
-  id            String          @id
-  name          String?
-  email         String?         @unique(map: "user_email_unique")
-  emailVerified DateTime?       @db.Timestamp(6)
-  image         String?
-  account       account[]
-  authenticator authenticator[]
-  room          room[]
-  session       session[]
-}
-
-model verificationToken {
+model VerificationToken {
   identifier String
   token      String
-  expires    DateTime @db.Timestamp(6)
+  expires    DateTime
 
-  @@id([identifier, token], map: "verificationToken_identifier_token_pk")
+  @@id([identifier, token])
+}
+
+//→ REALFLOW MODELS 
+
+model Channel {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  user_id     String
+
+  //→ RELATIONS
+
+  conversations Conversation[]
+  user          User              @relation(fields: [user_id], references: [id])
+  requests      Request[]
+  API_tokens    ChannelAPIToken[]
+}
+
+enum APITokenPermission {
+  READ
+  WRITE
+  DELETE
+}
+
+model ChannelAPIToken {
+  id          String               @id @default(cuid())
+  channel_id  String
+  name        String
+  description String?
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
+  expires     DateTime
+  permissions APITokenPermission[]
+
+  //→ RELATIONS
+
+  channel Channel @relation(fields: [channel_id], references: [id], onDelete: Cascade)
+}
+
+model Conversation {
+  id           String        @id @default(uuid())
+  is_group     Boolean       @default(false)
+  name         String
+  description  String?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  participants Participant[]
+  messages     Message[]
+  channel_id   String?
+
+  //→ RELATIONS
+
+  channel Channel? @relation(fields: [channel_id], references: [id])
+}
+
+enum ParticipantRole {
+  ADMIN
+  MODERATOR
+  MEMBER
+}
+
+model Participant {
+  id              String          @id @default(uuid())
+  user_id         String
+  conversation_id String
+  joined_at       DateTime        @default(now())
+  role            ParticipantRole @default(MEMBER)
+
+  //→ RELATIONS
+
+  conversation Conversation @relation(fields: [conversation_id], references: [id], onDelete: Cascade)
+  messages     Message[]
+}
+
+enum MessageType {
+  TEXT
+  FILE
+  IMAGE
+  AUDIO
+  VIDEO
+}
+
+model Message {
+  id              String      @id @default(uuid())
+  conversation_id String
+  sender_id       String
+  type            MessageType @default(TEXT)
+  content         String
+  created_at      DateTime    @default(now())
+  updated_at      DateTime    @updatedAt
+  is_deleted      Boolean     @default(false)
+  is_edited       Boolean     @default(false)
+  attachment_url  String?
+
+  //→ RELATIONS
+
+  conversation Conversation @relation(fields: [conversation_id], references: [id], onDelete: Cascade)
+  sender       Participant  @relation(fields: [sender_id], references: [id], onDelete: Cascade)
+}
+
+//→ REALFLOW METRICS MODELS 
+
+model Request {
+  id            String   @id @default(cuid())
+  user_agent    String
+  is_authorized Boolean  @default(false)
+  created_at    DateTime @default(now())
+  channel_id    String
+  ip_address    String?
+
+  //→ RELATIONS
+
+  channel Channel? @relation(fields: [channel_id], references: [id])
+  metrics Metric?
+}
+
+enum MetricStatus {
+  OPEN
+  CLOSED
+  ERROR
+}
+
+model Metric {
+  id                String       @id @default(cuid())
+  channel_id        String
+  created_at        DateTime     @default(now())
+  request_id        String       @unique
+  proccesing_time   Int
+  connection_status MetricStatus
+  error_message     String?
+  connected_users   Int
+
+  //→ RELATIONS
+
+  request Request @relation(fields: [request_id], references: [id])
 }
