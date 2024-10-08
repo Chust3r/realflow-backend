@@ -94,7 +94,7 @@ model ChannelAPIToken {
   description String?
   createdAt   DateTime             @default(now())
   updatedAt   DateTime             @updatedAt
-  expires     DateTime
+  expires     DateTime?
   permissions APITokenPermission[]
 
   //→ RELATIONS
