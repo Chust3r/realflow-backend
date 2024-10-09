@@ -1,32 +1,40 @@
-import type { Peer, Message } from 'crossws'
+import type { Peer, Message as TMessage } from 'crossws'
+import type { IClient } from '~lib/types'
 import qs from 'query-string'
-import { channelService } from '~services/channel'
+import { Channel } from '~services/channel'
+import { Message } from '~services/message'
+import { ClientManagement } from '~lib/client'
 
 class WebSocketService {
-	async open(client: Peer) {
-		const { query } = qs.parseUrl(client.request?.url as string)
+	private clients = new ClientManagement()
 
-		const channelId = query.c as string
-		const token = query.t as string
+	async open(peer: Peer) {
+		const { query } = qs.parseUrl(peer.request?.url as string)
 
-		const channel = await channelService.getChannelAccess(channelId, token)
+		const channelId = (query.c as string) ?? ''
+		const token = (query.t as string) ?? ''
 
-		if (!channel.access || !channel.channel) return client.close()
+		const { access, channel } = await Channel.getChannelAccess(
+			channelId,
+			token
+		)
 
-		//→ SUSBSCRIBE TO CHANNEL
+		if (!access || !channel) return peer.terminate()
 
-		client.subscribe(channel.channel.id)
+		const client: IClient = {
+			id: peer.id,
+			channelId: channel.id,
+			peer,
+			subscriptions: new Set(),
+		}
 
-		client.send(JSON.stringify({ channel: channel.channel }))
-		client.publish(channel.channel.id, 'Hello from the other side!')
-
-		//→ TODO: UPDATE METRICS
-
-		//→ SAVE CLIENT IN REDIS CACHE, THIS WILL BE USED TO CLOSE CONNECTION WHEN CHANNEL IS DELETED OR CLOSE CONNECTION PROGRAMATICALLY
+		this.clients.set(client)
 	}
 
-	async message(client: Peer, message: Message) {
-		console.log('message', client.id, message.text())
+	async message(peer: Peer, message: TMessage) {
+		const client = this.clients.get(peer.id)
+
+		console.log(client)
 	}
 
 	close() {}
@@ -34,4 +42,4 @@ class WebSocketService {
 	error() {}
 }
 
-export const websocket = new WebSocketService()
+export const Websocket = new WebSocketService()

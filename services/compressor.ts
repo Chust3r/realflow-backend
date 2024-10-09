@@ -17,4 +17,4 @@ export class PakoCompressor implements ICompressor {
 	}
 }
 
-export const compressor = new PakoCompressor()
+export const Compressor = new PakoCompressor()

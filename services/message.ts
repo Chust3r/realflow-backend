@@ -1,0 +1,90 @@
+import type { Message as TMessage } from 'crossws'
+import type { IClient, IMessage } from '~lib/types'
+
+class MessageService {
+	private parse(message: TMessage): IMessage {
+		try {
+			const payload = message.json() as IMessage
+
+			return payload
+		} catch (e) {
+			return {
+				timestamp: new Date().toISOString(),
+				event: 'error',
+				data: 'Could not parse message',
+			}
+		}
+	}
+
+	private stringify(payload: object) {
+		return JSON.stringify(payload)
+	}
+
+	async handler(client: IClient) {}
+
+	/* async open(client: IClient) {
+		const { id, client, subscriptions } = client
+
+		const CHANNEL_GLOBAL = 'CHANNEL:GLOBAL'
+
+		peer.subscribe(channelId)
+
+		const payload: IMessage = {
+			timestamp: 'TIMESTAMP',
+			event: 'JOIN',
+			data: {
+				type: 'CHANNEL',
+				name: 'GLOBAL',
+				clientId: peer.id,
+			},
+		}
+
+		peer.publish(CHANNEL_GLOBAL, this.stringify(payload))
+	} */
+}
+
+export const Message = new MessageService()
+
+/* 
+
+WEBSOCKET EVENTS 
+
+OPEN → OPEN NEW WS CONNECTION
+CLOSE → CLOSE WS CONNECTION
+ERROR → WHEN AN ERROR THROWS WHILE WS IS ACTIVE 
+
+CONNECTION → TRIGGER WHEN A NEW WS IS OPENED
+DISCONNECTION → TRIGGER WHEN A WS IS DISCONNECTED
+CLOSE_CONNECTION → CLOSE A CLIENT WS PROGRAMATLY
+
+
+UNSUBSCRIBE / UNSUB → LEAVE A DETERMINATE CHANNEL OR CONVERSATION
+SUBSCRIBE / SUB → JOIN A DETERMINATE CHANNEL OR CONVERSATION
+
+JOIN → TRIGGER WHEN USER JOINED A CHANNEL OR CONVERSATION
+LEAVE → TRIGGER WHEN USER LEAVE A CHANNEL OR CONVERSATION
+
+
+CHANNELS → DETERMINATE SPACES TO GET INFO FOR EXAMPLE
+
+GLOBAL → INFO LIKE TOTAL CONNECTIONS, CONVERSATIONS, ETC..
+
+METRICS → INFO LIKE LATENCY, TOTAL MESSAGES TRANSFERED, ETC..
+
+CONVERSATIONS → DINAMYC SPACES CREATED FOR THE USER TO HANDLE CONVERSATIONS ONE BY ONE OR GRUPAL
+
+
+PUBLISH / PUB → PUBLISH A MESSAGE IN DETERMINATE CHANNEL OR CONVERSATION 
+
+
+PING - PONG → HEARTBEAT BETWEEN SERVER / CLIENT
+
+MESSAGE_SENT → TRIGGER WHEN MESSAGE IS SENT TO SERVER
+MESSAGE_DELIVERED → TRIGGER WHEN MESSAGE IS SENT TO CLIENT OR SUBSCRIPTORS FROM THE SERVER
+MESSAGE_READ → TRIGGER WHEN MESSAGE IS READ
+
+CREATE_CONVERSATION → TRIGGER WHEN IS NEED CREATE A NEW CONVERSATION
+CONVERSATION_CREATED → TRIGGER WHEN A CONVERSATION IS CREATED 
+CONVERSATION_CLOSED → TRIGGER WHEN A CONVERSATION IS CLOSED BECAUSE INACTIVITY OR BECAUSE WAS CLOSE MANUALLY
+
+*/

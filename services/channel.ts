@@ -1,12 +1,12 @@
-import type { Channel, ChannelAPIToken } from '@prisma/client'
+import type { Channel as TChannel, ChannelAPIToken } from '@prisma/client'
 import { db } from '~db'
 
-type ChannelWithAPITokens = Channel & {
+type ChannelWithAPITokens = TChannel & {
 	API_tokens: ChannelAPIToken[]
 }
 
 interface IChannelService {
-	getChannel(id: string): Promise<Channel | null>
+	getChannel(id: string): Promise<TChannel | null>
 	getChannelAccess(
 		id: string,
 		token: string
@@ -53,4 +53,4 @@ class ChannelService implements IChannelService {
 	}
 }
 
-export const channelService = new ChannelService()
+export const Channel = new ChannelService()
